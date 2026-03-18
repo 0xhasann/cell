@@ -3,14 +3,17 @@
 
 
 int main(int agrc, char *agrv[]) {
-  printf("$\n");
 
-  char command[1024];
-  fgets(command, sizeof(command), stdin);
+  while (1) {
+    printf("$\n");
 
-  command[strcspn(command, "\n")] = 0;
+    char command[1024];
+    fgets(command, sizeof(command), stdin);
 
-  printf("%s: command not found\n", command);
+    command[strcspn(command, "\n")] = 0;
+
+    printf("%s: command not found\n", command);
+  }
 
   return 0;
 }
