@@ -1,3 +1,4 @@
+#include "path.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -25,19 +26,20 @@ int main(int agrc, char *agrv[]) {
       printf("%s\n", args);
     } else if (strcmp(first, "type") == 0) {
 
-      bool flag = false;
-      for (int i = 0; i < size; i++) {
-        if (strcmp(args, inbuilt_command[i]) == 0) {
-          flag = true;
-          break;
-        }
-      }
+      //   bool flag = false;
+      //   for (int i = 0; i < size; i++) {
+      //     if (strcmp(args, inbuilt_command[i]) == 0) {
+      //       flag = true;
+      //       break;
+      //     }
+      //   }
 
-      if (flag) {
-        printf("%s is shell builtin\n", args);
-      } else {
-        printf("%s: not found\n", args);
-      }
+      //   if (flag) {
+      //     printf("%s is shell builtin\n", args);
+      //   } else {
+      //     printf("%s: not found\n", args);
+      //   }
+      type_command(args);
 
     } else {
       printf("%s: command not found\n", command);
