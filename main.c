@@ -25,22 +25,9 @@ int main(int agrc, char *agrv[]) {
     } else if (strcmp(first, "echo") == 0) {
       printf("%s\n", args);
     } else if (strcmp(first, "type") == 0) {
-
-      //   bool flag = false;
-      //   for (int i = 0; i < size; i++) {
-      //     if (strcmp(args, inbuilt_command[i]) == 0) {
-      //       flag = true;
-      //       break;
-      //     }
-      //   }
-
-      //   if (flag) {
-      //     printf("%s is shell builtin\n", args);
-      //   } else {
-      //     printf("%s: not found\n", args);
-      //   }
       type_command(args);
-
+    } else if (strstr(first, "pwd") == first) {
+      printf("%s\n", pwd());
     } else {
       printf("%s: command not found\n", command);
     }

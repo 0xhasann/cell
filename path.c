@@ -5,6 +5,11 @@
 #include <sys/unistd.h>
 #include <unistd.h>
 
+#define MAX_VALUE 1024
+static char command_buf[MAX_VALUE];
+
+char *pwd() { return getcwd(command_buf, MAX_VALUE); }
+
 int is_builtin(char *cmd) {
   const char *builtins[] = {"cd", "echo", "exit", "pwd", "type"};
   int size = sizeof(builtins) / sizeof(builtins[0]);
