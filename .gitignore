@@ -1,1 +1,6 @@
 main
+
+*.out
+*.exe
+shell
+custom_exe_1234
