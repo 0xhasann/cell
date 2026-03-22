@@ -107,7 +107,6 @@ int main(int agrc, char *agrv[]) {
         printf("%s: No such file or directory\n", args[1]);
       }
     } else {
-      // printf("%s: command not found\n", args[0]);
       char *path = find_executable(args[0]);
 
       if (path == NULL) {
