@@ -6,6 +6,10 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#define IS_SPECIAL(c)                                                          \
+  ((c) == '"' || (c) == '\\' || (c) == '$' || (c) == '`' || (c) == '\n')
+
 int main(int agrc, char *agrv[]) {
 
   while (1) {
@@ -54,17 +58,30 @@ int main(int agrc, char *agrv[]) {
         }
         continue;
       } else if (*ptr == '"') {
-        if (*ptr == '"') {
-          ptr++;
-          while (*ptr && *ptr != '"') {
+        // if (*ptr == '"') {
+        ptr++;
+        while (*ptr && *ptr != '"') {
+
+          if (*ptr == '\\') {
+            ptr++;
+            if (*ptr && IS_SPECIAL(*ptr)) {
+              current[k++] = *ptr;
+            } else {
+              current[k++] = '\\';
+              current[k++] = *ptr;
+            }
+            // continue;
+            ptr++;
+          } else {
             current[k++] = *ptr;
             ptr++;
           }
-          if (*ptr == '"') {
-            ptr++;
-          }
-          continue;
         }
+        if (*ptr == '"') {
+          ptr++;
+        }
+        continue;
+        // }
       }
 
       current[k++] = *ptr;
