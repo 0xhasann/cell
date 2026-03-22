@@ -1,4 +1,5 @@
 #include "path.h"
+#include <_string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,20 +14,21 @@ int main(int agrc, char *agrv[]) {
 
     char command[1024];
     char *args[100];
-    char *ptr = command;
+
     char current[1024];
     int k = 0;
     int c = 0;
     fgets(command, sizeof(command), stdin);
 
     command[strcspn(command, "\n")] = 0;
+    char *ptr = command;
 
     while (*ptr) {
       if (*ptr == ' ') {
-        if (k > 0) {
-          current[k] = '\0';
-          args[c++] = strdup(current);
-          k = 0;
+        if (c > 0) {
+          current[c] = '\0';
+          args[k++] = strdup(current);
+          c = 0;
         }
         ptr++;
         continue;
@@ -34,25 +36,38 @@ int main(int agrc, char *agrv[]) {
 
       if (*ptr == '\'') {
         ptr++;
-
         while (*ptr && *ptr != '\'') {
-          current[k++] = *ptr++;
-        }
-
-        if (*ptr == '\'')
+          current[c++] = *ptr;
           ptr++;
-
+        }
+        if (*ptr == '\'') {
+          ptr++;
+        }
         continue;
+      } else if (*ptr == '"') {
+        if (*ptr == '"') {
+          ptr++;
+          while (*ptr && *ptr != '"') {
+            current[c++] = *ptr;
+            ptr++;
+          }
+          if (*ptr == '"') {
+            ptr++;
+          }
+          continue;
+        }
       }
-      current[k++] = *ptr;
+
+      current[c++] = *ptr;
       ptr++;
     }
-    if (k > 0) {
-      current[k] = '\0';
-      args[c++] = strdup(current);
-    }
 
-    args[c] = NULL;
+    if (c > 0) {
+      current[c] = '\0';
+      args[k++] = strdup(current);
+    }
+    args[k] = NULL;
+
     if (args[0] == NULL)
       continue;
     const char *inbuilt_command[] = {"echo", "type", "exit"};
