@@ -16,8 +16,8 @@ int main(int agrc, char *agrv[]) {
     char *args[100];
 
     char current[1024];
-    int k = 0;
     int c = 0;
+    int k = 0;
     fgets(command, sizeof(command), stdin);
 
     command[strcspn(command, "\n")] = 0;
@@ -25,19 +25,28 @@ int main(int agrc, char *agrv[]) {
 
     while (*ptr) {
       if (*ptr == ' ') {
-        if (c > 0) {
-          current[c] = '\0';
-          args[k++] = strdup(current);
-          c = 0;
+        if (k > 0) {
+          current[k] = '\0';
+          args[c++] = strdup(current);
+          k = 0;
         }
         ptr++;
+        continue;
+      }
+
+      if (*ptr == '\\') {
+        ptr++;
+        if (*ptr) {
+          current[k++] = *ptr;
+          ptr++;
+        }
         continue;
       }
 
       if (*ptr == '\'') {
         ptr++;
         while (*ptr && *ptr != '\'') {
-          current[c++] = *ptr;
+          current[k++] = *ptr;
           ptr++;
         }
         if (*ptr == '\'') {
@@ -48,7 +57,7 @@ int main(int agrc, char *agrv[]) {
         if (*ptr == '"') {
           ptr++;
           while (*ptr && *ptr != '"') {
-            current[c++] = *ptr;
+            current[k++] = *ptr;
             ptr++;
           }
           if (*ptr == '"') {
@@ -58,15 +67,15 @@ int main(int agrc, char *agrv[]) {
         }
       }
 
-      current[c++] = *ptr;
+      current[k++] = *ptr;
       ptr++;
     }
 
-    if (c > 0) {
-      current[c] = '\0';
-      args[k++] = strdup(current);
+    if (k > 0) {
+      current[k] = '\0';
+      args[c++] = strdup(current);
     }
-    args[k] = NULL;
+    args[c] = NULL;
 
     if (args[0] == NULL)
       continue;
