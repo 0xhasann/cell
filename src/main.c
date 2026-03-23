@@ -1,4 +1,6 @@
 #include "path.h"
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,91 +8,32 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define IS_SPECIAL(c)                                                          \
-  ((c) == '"' || (c) == '\\' || (c) == '$' || (c) == '`' || (c) == '\n')
-int main(int agrc, char *agrv[]) {
+int main(int argc, char *argv[]) {
+
+  rl_bind_key('\t', rl_complete);
+  rl_attempted_completion_function = my_completion;
+  using_history();
 
   while (1) {
-    printf("$ ");
-    fflush(stdout);
+    // printf("$ ");
+    // fflush(stdout);
+
+    char *input = readline("$ ");
+    if (!input)
+      break;
+    add_history(input);
 
     char command[1024];
     char *args[100];
-    char *ptr = command;
-    char current[1024];
-    int k = 0;
-    int c = 0;
-    fgets(command, sizeof(command), stdin);
+    memset(args, 0, sizeof(args));
 
-    command[strcspn(command, "\n")] = 0;
+    // fgets(command, sizeof(command), stdin);
+    strncpy(command, input, sizeof(command) - 1);
 
-    while (*ptr) {
-      if (*ptr == ' ') {
-        if (k > 0) {
-          current[k] = '\0';
-          args[c++] = strdup(current);
-          k = 0;
-        }
-        ptr++;
-        continue;
-      }
+    // command[strcspn(command, "\n")] = 0;
+    command[sizeof(command) - 1] = '\0';
 
-      if (*ptr == '\\') {
-        ptr++;
-        if (*ptr) {
-          current[k++] = *ptr;
-          ptr++;
-        }
-        continue;
-      }
-
-      if (*ptr == '\'') {
-        ptr++;
-
-        while (*ptr && *ptr != '\'') {
-          current[k++] = *ptr++;
-        }
-
-        if (*ptr == '\'')
-          ptr++;
-
-        continue;
-      } else if (*ptr == '"') {
-        // if (*ptr == '"') {
-        ptr++;
-        while (*ptr && *ptr != '"') {
-
-          if (*ptr == '\\') {
-            ptr++;
-            if (*ptr && IS_SPECIAL(*ptr)) {
-              current[k++] = *ptr;
-            } else {
-              current[k++] = '\\';
-              current[k++] = *ptr;
-            }
-            // continue;
-            ptr++;
-          } else {
-            current[k++] = *ptr;
-            ptr++;
-          }
-        }
-          if (*ptr == '"') {
-            ptr++;
-          }
-          continue;
-          // }
-      }
-
-      current[k++] = *ptr;
-      ptr++;
-    }
-    if (k > 0) {
-      current[k] = '\0';
-      args[c++] = strdup(current);
-    }
-
-    args[c] = NULL;
+    format_input(args, command);
     if (args[0] == NULL)
       continue;
 
@@ -146,6 +89,8 @@ int main(int agrc, char *agrv[]) {
       dup2(saved_output, redirection_fd);
       close(saved_output);
     }
+
+    free(input);
   }
 
   return 0;

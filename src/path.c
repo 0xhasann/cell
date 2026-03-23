@@ -1,5 +1,7 @@
 #include "path.h"
 #include <fcntl.h>
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,9 +9,109 @@
 #include <sys/unistd.h>
 #include <unistd.h>
 #define MAX_VALUE 1024
+#define IS_SPECIAL(c)                                                          \
+  ((c) == '"' || (c) == '\\' || (c) == '$' || (c) == '`' || (c) == '\n')
 static char command_buf[MAX_VALUE];
 
 char *pwd() { return getcwd(command_buf, MAX_VALUE); }
+
+char *commands[] = {"cd", "ls", "echo", "exit", NULL};
+
+char *command_generator(const char *text, int state) {
+  static int index, len;
+
+  if (!state) {
+    index = 0;
+    len = strlen(text);
+  }
+
+  while (commands[index]) {
+    char *name = commands[index];
+    index++;
+
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+}
+
+char **my_completion(const char *text, int start, int end) {
+  return rl_completion_matches(text, command_generator);
+}
+
+void format_input(char *args[], char cmd[]) {
+  char *ptr = cmd;
+  char current[1024];
+  int k = 0;
+  int c = 0;
+
+  while (*ptr) {
+    if (*ptr == ' ') {
+      if (k > 0) {
+        current[k] = '\0';
+        args[c++] = strdup(current);
+        k = 0;
+      }
+      ptr++;
+      continue;
+    }
+
+    if (*ptr == '\\') {
+      ptr++;
+      if (*ptr) {
+        current[k++] = *ptr;
+        ptr++;
+      }
+      continue;
+    }
+
+    if (*ptr == '\'') {
+      ptr++;
+
+      while (*ptr && *ptr != '\'') {
+        current[k++] = *ptr++;
+      }
+
+      if (*ptr == '\'')
+        ptr++;
+
+      continue;
+    } else if (*ptr == '"') {
+      ptr++;
+      while (*ptr && *ptr != '"') {
+
+        if (*ptr == '\\') {
+          ptr++;
+          if (*ptr && IS_SPECIAL(*ptr)) {
+            current[k++] = *ptr;
+          } else {
+            current[k++] = '\\';
+            current[k++] = *ptr;
+          }
+          ptr++;
+        } else {
+          current[k++] = *ptr;
+          ptr++;
+        }
+      }
+      if (*ptr == '"') {
+        ptr++;
+      }
+      continue;
+    }
+
+    current[k++] = *ptr;
+    ptr++;
+  }
+  if (k > 0) {
+    current[k] = '\0';
+    args[c++] = strdup(current);
+  }
+
+  args[c] = NULL;
+}
 
 int handle_redirection(char *args[], int *redirection_fd) {
 
@@ -18,7 +120,7 @@ int handle_redirection(char *args[], int *redirection_fd) {
         strcmp(args[i], ">>") == 0 || strcmp(args[i], "1>>") == 0) {
       *redirection_fd = STDOUT_FILENO;
 
-    } else if (strcmp(args[i], "2>") == 0) {
+    } else if (strcmp(args[i], "2>") == 0 || strcmp(args[i], "2>>") == 0) {
       *redirection_fd = STDERR_FILENO;
     }
     if (*redirection_fd != -1) {
