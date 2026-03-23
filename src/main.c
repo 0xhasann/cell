@@ -1,5 +1,4 @@
 #include "path.h"
-#include <_string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +8,6 @@
 
 #define IS_SPECIAL(c)                                                          \
   ((c) == '"' || (c) == '\\' || (c) == '$' || (c) == '`' || (c) == '\n')
-
 int main(int agrc, char *agrv[]) {
 
   while (1) {
@@ -18,14 +16,13 @@ int main(int agrc, char *agrv[]) {
 
     char command[1024];
     char *args[100];
-
+    char *ptr = command;
     char current[1024];
-    int c = 0;
     int k = 0;
+    int c = 0;
     fgets(command, sizeof(command), stdin);
 
     command[strcspn(command, "\n")] = 0;
-    char *ptr = command;
 
     while (*ptr) {
       if (*ptr == ' ') {
@@ -49,13 +46,14 @@ int main(int agrc, char *agrv[]) {
 
       if (*ptr == '\'') {
         ptr++;
+
         while (*ptr && *ptr != '\'') {
-          current[k++] = *ptr;
-          ptr++;
+          current[k++] = *ptr++;
         }
-        if (*ptr == '\'') {
+
+        if (*ptr == '\'')
           ptr++;
-        }
+
         continue;
       } else if (*ptr == '"') {
         // if (*ptr == '"') {
@@ -87,17 +85,18 @@ int main(int agrc, char *agrv[]) {
       current[k++] = *ptr;
       ptr++;
     }
-
     if (k > 0) {
       current[k] = '\0';
       args[c++] = strdup(current);
     }
-    args[c] = NULL;
 
+    args[c] = NULL;
     if (args[0] == NULL)
       continue;
-    const char *inbuilt_command[] = {"echo", "type", "exit"};
-    int size = sizeof(inbuilt_command) / sizeof(inbuilt_command[0]);
+
+    int redirection_fd = -1;
+
+    int saved_output = handle_redirection(args, &redirection_fd);
 
     if (strcmp(args[0], "exit") == 0) {
       break;
@@ -124,13 +123,13 @@ int main(int agrc, char *agrv[]) {
         printf("%s: No such file or directory\n", args[1]);
       }
     } else {
+
       char *path = find_executable(args[0]);
 
       if (path == NULL) {
         printf("%s: command not found\n", args[0]);
         continue;
       }
-
       pid_t pid = fork();
 
       if (pid == 0) {
@@ -141,6 +140,11 @@ int main(int agrc, char *agrv[]) {
       } else {
         wait(NULL);
       }
+    }
+
+    if (saved_output != -1) {
+      dup2(saved_output, redirection_fd);
+      close(saved_output);
     }
   }
 
