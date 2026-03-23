@@ -75,11 +75,11 @@ int main(int agrc, char *agrv[]) {
             ptr++;
           }
         }
-        if (*ptr == '"') {
-          ptr++;
-        }
-        continue;
-        // }
+          if (*ptr == '"') {
+            ptr++;
+          }
+          continue;
+          // }
       }
 
       current[k++] = *ptr;

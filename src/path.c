@@ -1,14 +1,51 @@
-#include <string.h>
+#include "path.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/fcntl.h>
 #include <sys/unistd.h>
 #include <unistd.h>
-
 #define MAX_VALUE 1024
 static char command_buf[MAX_VALUE];
 
 char *pwd() { return getcwd(command_buf, MAX_VALUE); }
+
+int handle_redirection(char *args[], int *redirection_fd) {
+
+  for (int i = 0; args[i] != NULL; i++) {
+    if (strcmp(args[i], ">") == 0 || strcmp(args[i], "1>") == 0 ||
+        strcmp(args[i], ">>") == 0 || strcmp(args[i], "1>>") == 0) {
+      *redirection_fd = STDOUT_FILENO;
+
+    } else if (strcmp(args[i], "2>") == 0) {
+      *redirection_fd = STDERR_FILENO;
+    }
+    if (*redirection_fd != -1) {
+      if (args[i + 1] == NULL) {
+        printf("Expacted file name after >");
+        return -1;
+      }
+      char *fileName = args[i + 1];
+      args[i] = NULL;
+      args[i + 1] = NULL;
+      int saved_output = dup(*redirection_fd);
+
+      int fd = open(fileName, O_WRONLY | O_CREAT | O_APPEND, 0644);
+      if (fd < 0) {
+        perror("open");
+        return -1;
+      }
+
+      dup2(fd, *redirection_fd);
+      close(fd);
+
+      return saved_output;
+    }
+  }
+
+  return -1;
+}
 
 int is_builtin(char *cmd) {
   const char *builtins[] = {"cd", "echo", "exit", "pwd", "type"};
@@ -23,7 +60,7 @@ int is_builtin(char *cmd) {
 void type_command(char *cmd[]) {
 
   if (is_builtin(cmd[0])) {
-    printf("%s is a shell builtin\n", *cmd);
+    printf("%s is a shell builtin\n", cmd[0]);
     return;
   }
 
@@ -45,7 +82,6 @@ void type_command(char *cmd[]) {
       return;
     }
     dir = strtok(NULL, ":");
-  
   }
   printf("%s not found\n", *cmd);
   free(copy_path);
