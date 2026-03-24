@@ -10,6 +10,7 @@
 // #include <sys/fcntl.h>
 #include <sys/unistd.h>
 #include <sys/wait.h>
+
 #include <unistd.h>
 #define MAX_VALUE 1024
 #define IS_SPECIAL(c)                                                          \
@@ -108,5 +109,10 @@ char **my_completion(const char *text, int start, int end) {
 
   load_path_commands();
   rl_completion_append_character = ' ';
-  return rl_completion_matches(text, command_generator);
+  char **matches = rl_completion_matches(text, command_generator);
+  if (!matches || !matches[1]) {
+    write(STDOUT_FILENO, "\a", 1);
+  }
+
+  return matches;
 }
