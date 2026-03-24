@@ -1,45 +1,23 @@
 #include "path.h"
+#include <dirent.h>
 #include <fcntl.h>
 #include <readline/history.h>
 #include <readline/readline.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/fcntl.h>
+// #include <sys/fcntl.h>
 #include <sys/unistd.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #define MAX_VALUE 1024
 #define IS_SPECIAL(c)                                                          \
   ((c) == '"' || (c) == '\\' || (c) == '$' || (c) == '`' || (c) == '\n')
+
 static char command_buf[MAX_VALUE];
 
 char *pwd() { return getcwd(command_buf, MAX_VALUE); }
-
-char *commands[] = {"cd", "ls", "echo", "exit", NULL};
-
-char *command_generator(const char *text, int state) {
-  static int index, len;
-
-  if (!state) {
-    index = 0;
-    len = strlen(text);
-  }
-
-  while (commands[index]) {
-    char *name = commands[index];
-    index++;
-
-    if (strncmp(name, text, len) == 0) {
-      return strdup(name);
-    }
-  }
-
-  return NULL;
-}
-
-char **my_completion(const char *text, int start, int end) {
-  return rl_completion_matches(text, command_generator);
-}
 
 void format_input(char *args[], char cmd[]) {
   char *ptr = cmd;
@@ -187,4 +165,41 @@ void type_command(char *cmd[]) {
   }
   printf("%s not found\n", *cmd);
   free(copy_path);
+}
+
+void custom_echo(char *args[]) {
+  for (int j = 1; args[j] != NULL; j++) {
+    printf("%s", args[j]);
+    if (args[j + 1] != NULL)
+      printf(" ");
+  }
+  printf("\n");
+}
+
+void custom_cd(char *args[]) {
+  if (args[1] == NULL || strcmp(args[1], "~") == 0) {
+    char *home = getenv("HOME");
+    chdir(home);
+  } else if (chdir(args[1]) == -1) {
+    printf("%s: No such file or directory\n", args[1]);
+  }
+}
+
+void custom_executable(char *args[]) {
+  char *path = find_executable(args[0]);
+
+  if (path == NULL) {
+    printf("%s: command not found\n", args[0]);
+    return;
+  }
+  pid_t pid = fork();
+
+  if (pid == 0) {
+    execv(path, args);
+
+    perror("exec failed");
+    exit(1);
+  } else {
+    wait(NULL);
+  }
 }
