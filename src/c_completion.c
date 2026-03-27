@@ -7,83 +7,85 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <sys/fcntl.h>
 #include <sys/unistd.h>
 #include <sys/wait.h>
 
 #include <unistd.h>
-#define MAX_VALUE 1024
-#define IS_SPECIAL(c)                                                          \
-  ((c) == '"' || (c) == '\\' || (c) == '$' || (c) == '`' || (c) == '\n')
-#define MAX_COMMANDS 10000
 
-static char *commands[MAX_COMMANDS];
-static int command_count = 0;
-static char command_buf[MAX_VALUE];
+int completion_start;
 
-void add_completion(const char *cmd) {
-  if (!cmd)
-    return;
+char *file_generator(const char *text, int state) {
+  static DIR *dir;
+  static struct dirent *entry;
 
-  for (int i = 0; i < command_count; i++) {
-    if (strcmp(commands[i], cmd) == 0) {
-      return;
+  static char dir_path[1024];
+  static char prefix[1024];
+  static int has_slash;
+
+  if (state == 0) {
+    char *slash = strrchr(text, '/');
+
+    if (slash) {
+      has_slash = 1;
+
+      int dir_len = slash - text + 1;
+      strncpy(dir_path, text, dir_len);
+      dir_path[dir_len] = '\0';
+
+      strcpy(prefix, slash + 1);
+    } else {
+      has_slash = 0;
+
+      strcpy(dir_path, ".");
+      strcpy(prefix, text);
     }
+
+    dir = opendir(dir_path);
   }
 
-  if (command_count < MAX_COMMANDS - 1) {
-    commands[command_count++] = strdup(cmd);
-    commands[command_count] = NULL;
-  }
-}
+  if (!dir)
+    return NULL;
 
-void load_path_commands() {
-  static const char *builtins[] = {"cd", "echo", "exit", "pwd", "type", NULL};
-  for (int i = 0; i < command_count; i++) {
-    free(commands[i]);
-    commands[i] = NULL;
-  }
-  command_count = 0;
+  while ((entry = readdir(dir)) != NULL) {
+    if (strncmp(entry->d_name, prefix, strlen(prefix)) == 0) {
 
-  for (int i = 0; builtins[i] != NULL; i++) {
-    add_completion(builtins[i]);
-  }
+      char *result;
+      if (entry->d_type == DT_DIR) {
+        rl_completion_append_character = '\0';
 
-  char *path = getenv("PATH");
-  if (!path)
-    return;
-
-  char *copy = strdup(path);
-  if (!copy)
-    return;
-
-  char *dir_path = strtok(copy, ":");
-  while (dir_path != NULL) {
-    DIR *dir = opendir(dir_path);
-    if (dir) {
-      struct dirent *entry;
-      while ((entry = readdir(dir))) {
-        if (entry->d_name[0] == '.')
-          continue;
-
-        char full_path[1024];
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path,
-                 entry->d_name);
-        if (access(full_path, X_OK) == 0) {
-          add_completion(entry->d_name);
+        if (has_slash) {
+          result = malloc(strlen(dir_path) + strlen(entry->d_name) + 2);
+          sprintf(result, "%s%s/", dir_path, entry->d_name);
+        } else {
+          result = malloc(strlen(entry->d_name) + 2);
+          sprintf(result, "%s/", entry->d_name);
         }
-      }
-      closedir(dir);
-    }
 
-    dir_path = strtok(NULL, ":");
+        return result;
+      } else {
+
+        rl_completion_append_character = ' ';
+
+        if (has_slash) {
+          result = malloc(strlen(dir_path) + strlen(entry->d_name) + 1);
+          sprintf(result, "%s%s", dir_path, entry->d_name);
+        } else {
+
+          result = strdup(entry->d_name);
+        }
+
+        return result;
+      }
+    }
   }
 
-  free(copy);
+  closedir(dir);
+  return NULL;
 }
 
 char *command_generator(const char *text, int state) {
   static int index, len;
+  char *commands[] = {"echo", "exit", NULL};
 
   if (!state) {
     index = 0;
@@ -95,7 +97,9 @@ char *command_generator(const char *text, int state) {
     index++;
 
     if (strncmp(name, text, len) == 0) {
-      return strdup(name);
+      char *result = malloc(strlen(name) + 2);
+      sprintf(result, "%s", name);
+      return result;
     }
   }
 
@@ -103,16 +107,26 @@ char *command_generator(const char *text, int state) {
 }
 
 char **my_completion(const char *text, int start, int end) {
-  (void)end;
-  if (start != 0)
-    return NULL;
+  rl_attempted_completion_over = 1;
+  completion_start = start;
 
-  load_path_commands();
-  rl_completion_append_character = ' ';
-  char **matches = rl_completion_matches(text, command_generator);
-  if (!matches || !matches[1]) {
-    write(STDOUT_FILENO, "\a", 1);
+  char **matches = NULL;
+
+  if (start == 0) {
+
+    matches = rl_completion_matches(text, command_generator);
+
+    if (matches != NULL) {
+      rl_completion_append_character = ' ';
+    } else {
+      matches = rl_completion_matches(text, file_generator);
+    }
+  } else {
+    matches = rl_completion_matches(text, file_generator);
   }
 
+  if (matches == NULL) {
+    write(STDOUT_FILENO, "\a", 1);
+  }
   return matches;
 }
