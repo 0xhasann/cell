@@ -106,12 +106,15 @@ int handle_redirection(char *args[], int *redirection_fd) {
         printf("Expacted file name after >");
         return -1;
       }
+      int append = (strcmp(args[i], ">>") == 0 || strcmp(args[i], "1>>") == 0 ||
+                    strcmp(args[i], "2>>") == 0);
       char *fileName = args[i + 1];
       args[i] = NULL;
       args[i + 1] = NULL;
       int saved_output = dup(*redirection_fd);
 
-      int fd = open(fileName, O_WRONLY | O_CREAT | O_APPEND, 0644);
+      int fd = open(fileName, O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC),
+                     0644);
       if (fd < 0) {
         perror("open");
         return -1;
