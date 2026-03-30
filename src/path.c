@@ -131,7 +131,7 @@ int handle_redirection(char *args[], int *redirection_fd) {
 }
 
 int is_builtin(char *cmd) {
-  const char *builtins[] = {"cd", "echo", "exit", "pwd", "type"};
+  const char *builtins[] = {"cd", "echo", "exit", "pwd", "type", "history"};
   int size = sizeof(builtins) / sizeof(builtins[0]);
   for (int i = 0; i < size; i++) {
     if (strcmp(cmd, builtins[i]) == 0)
