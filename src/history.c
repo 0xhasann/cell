@@ -7,15 +7,41 @@
 
 static int last_appended = 0;
 
+void sync_history_append_index() { last_appended = history_length; }
+
+void custom_append_history() {
+
+  char *file = getenv("HISTFILE");
+
+  if (!file) {
+    return;
+  }
+
+  FILE *fp = fopen(file, "a");
+
+  if (!fp) {
+    perror("fopen");
+    return;
+  }
+
+  for (int i = last_appended; i < history_length; i++) {
+    HIST_ENTRY *entry = history_get(history_base + i);
+    if (entry && entry->line) {
+      fprintf(fp, "%s\n", entry->line);
+    }
+  }
+
+  fclose(fp);
+
+  last_appended = history_length;
+}
+
 void custom_history(char *args[], char *input) {
 
   int his_start_index = 0;
   if (args[1] != NULL) {
     his_start_index = history_length - atoi(args[1]);
   }
-
-  printf("last_appended %d history_length %d\n", last_appended, history_length);
-  fflush(stdout);
 
   if (args[1] && strcmp(args[1], "-r") == 0) {
 

@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
   char *histfile = getenv("HISTFILE");
   if (histfile) {
     read_history(histfile);
+    sync_history_append_index();
   }
 
   while (1) {
@@ -31,8 +32,9 @@ int main(int argc, char *argv[]) {
     char *input = readline("$ ");
     if (!input)
       break;
-    add_history(input);
-
+    if (input && *input) {
+      add_history(input);
+    }
     memset(args, 0, sizeof(args));
     strncpy(command, input, sizeof(command) - 1);
     command[sizeof(command) - 1] = '\0';
@@ -92,6 +94,6 @@ int main(int argc, char *argv[]) {
     if (exiting)
       break;
   }
-
+  custom_append_history();
   return 0;
 }

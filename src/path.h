@@ -18,3 +18,5 @@ int is_builtin(char *cmd);
 void run_multi_pipeline(char ***commands, int n);
 void handle_sigint();
 void custom_history(char *args[], char *input);
+void custom_append_history();
+void sync_history_append_index();
