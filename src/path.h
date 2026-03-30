@@ -14,3 +14,4 @@ void custom_executable(char *args[]);
 void run_pipeline(char **cmd1, char **cmd2);
 void parse_command(char *input, char **args);
 char **command_completion(const char *text);
+int is_builtin(char *cmd);

@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 
   rl_bind_key('\t', rl_complete);
   rl_attempted_completion_function = my_completion;
-  using_history();
+  // using_history();
 
   while (1) {
 
@@ -56,7 +56,8 @@ int main(int argc, char *argv[]) {
     int saved_output = handle_redirection(args, &redirection_fd);
 
     if (strcmp(args[0], "exit") == 0) {
-      /* fall through to restore + free + break */
+      free(input);
+      break;
     } else if (strcmp(args[0], "echo") == 0) {
       custom_echo(args);
     } else if (strcmp(args[0], "type") == 0) {

@@ -139,20 +139,10 @@ char **my_completion(const char *text, int start, int end) {
   char **matches = NULL;
 
   if (start == 0) {
-
-    // matches = rl_completion_matches(text, command_generator);
     matches = command_completion(text);
-
-    // if (matches != NULL) {
-    //   rl_completion_append_character = ' ';
-    // }
   } else {
     matches = rl_completion_matches(text, file_generator);
   }
-
-  // if (matches == NULL) {
-  //   write(STDOUT_FILENO, "\a", 1);
-  // }
   return matches;
 }
 
