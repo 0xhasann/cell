@@ -17,4 +17,4 @@ char **command_completion(const char *text);
 int is_builtin(char *cmd);
 void run_multi_pipeline(char ***commands, int n);
 void handle_sigint();
-void custom_history(char *args[]);
+void custom_history(char *args[], char *input);

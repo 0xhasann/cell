@@ -33,25 +33,6 @@ int main(int argc, char *argv[]) {
     strncpy(command, input, sizeof(command) - 1);
     command[sizeof(command) - 1] = '\0';
 
-    // single pipe smc
-    // if (strchr(command, '|')) {
-    //   char *left = strtok(command, "|");
-    //   char *right = strtok(NULL, "|");
-
-    //   while (*left == ' ')
-    //     left++;
-    //   while (*right == ' ')
-    //     right++;
-
-    //   char *cmd1[100];
-    //   char *cmd2[100];
-
-    //   format_input(cmd1, left);
-    //   format_input(cmd2, right);
-
-    //   run_pipeline(cmd1, cmd2);
-    //   continue;
-    // }
     // multi pipe cmd
     if (strchr(command, '|')) {
 
@@ -92,7 +73,7 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(args[0], "cd") == 0) {
       custom_cd(args);
     } else if (strcmp(args[0], "history") == 0) {
-      custom_history(args);
+      custom_history(args, input);
     } else {
       custom_executable(args);
     }
