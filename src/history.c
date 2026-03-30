@@ -1,5 +1,6 @@
 #include "path.h"
 #include <readline/history.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -13,23 +14,20 @@ void custom_history(char *args[], char *input) {
   if (args[1] && strcmp(args[1], "-r") == 0) {
 
     if (args[2]) {
-      args[2][strcspn(args[2], "\n")] = '\0';
-      char *cmd_copy = strdup(input);
-
-      clear_history();
-      add_history(cmd_copy);
-
       if (read_history(args[2]) != 0) {
         perror("read_history");
       }
-
-      free(cmd_copy);
-      //   clear_history();
-      //   if (read_history(args[2]) != 0) {
-      //     perror("read_history");
-      //   }
-      // } else {
-      //   printf("history: missing file\n");
+    } else {
+      printf("history: missing file\n");
+    }
+    return;
+  } else if (args[1] && strcmp(args[1], "-w") == 0) {
+    if (args[2]) {
+      if (write_history(args[2]) != 0) {
+        perror("write_history");
+      }
+    } else {
+      printf("history: missing file\n");
     }
     return;
   }
