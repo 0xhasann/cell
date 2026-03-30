@@ -9,3 +9,6 @@ Quoting
 Redirection
 Command Completion
 Filename Completion
+Pipelines
+History
+History Persistence
