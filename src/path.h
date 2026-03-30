@@ -15,3 +15,6 @@ void run_pipeline(char **cmd1, char **cmd2);
 void parse_command(char *input, char **args);
 char **command_completion(const char *text);
 int is_builtin(char *cmd);
+void run_multi_pipeline(char ***commands, int n);
+// void handle_sigint(int sig);
+void handle_sigint();

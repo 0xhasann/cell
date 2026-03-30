@@ -10,6 +10,8 @@
 
 int main(int argc, char *argv[]) {
 
+  handle_sigint();
+
   rl_bind_key('\t', rl_complete);
   rl_attempted_completion_function = my_completion;
   // using_history();
@@ -19,6 +21,8 @@ int main(int argc, char *argv[]) {
     char command[1024];
     char *args[100];
     int redirection_fd = -1;
+    char *pipe_cmds[100];
+    int count = 0;
 
     char *input = readline("$ ");
     if (!input)
@@ -29,22 +33,43 @@ int main(int argc, char *argv[]) {
     strncpy(command, input, sizeof(command) - 1);
     command[sizeof(command) - 1] = '\0';
 
+    // single pipe smc
+    // if (strchr(command, '|')) {
+    //   char *left = strtok(command, "|");
+    //   char *right = strtok(NULL, "|");
+
+    //   while (*left == ' ')
+    //     left++;
+    //   while (*right == ' ')
+    //     right++;
+
+    //   char *cmd1[100];
+    //   char *cmd2[100];
+
+    //   format_input(cmd1, left);
+    //   format_input(cmd2, right);
+
+    //   run_pipeline(cmd1, cmd2);
+    //   continue;
+    // }
+    // multi pipe cmd
     if (strchr(command, '|')) {
-      char *left = strtok(command, "|");
-      char *right = strtok(NULL, "|");
 
-      while (*left == ' ')
-        left++;
-      while (*right == ' ')
-        right++;
+      char *token = strtok(command, "|");
+      while (token != NULL) {
+        while (*token == ' ')
+          token++;
+        pipe_cmds[count++] = token;
+        token = strtok(NULL, "|");
+      }
 
-      char *cmd1[100];
-      char *cmd2[100];
+      char **parsed[count];
 
-      format_input(cmd1, left);
-      format_input(cmd2, right);
-
-      run_pipeline(cmd1, cmd2);
+      for (int i = 0; i < count; i++) {
+        parsed[i] = malloc(sizeof(char *) * 100);
+        format_input(parsed[i], pipe_cmds[i]);
+      }
+      run_multi_pipeline(parsed, count);
       continue;
     }
 
