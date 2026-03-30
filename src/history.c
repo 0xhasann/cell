@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+static int last_appended = 0;
 
 void custom_history(char *args[], char *input) {
 
@@ -10,6 +13,9 @@ void custom_history(char *args[], char *input) {
   if (args[1] != NULL) {
     his_start_index = history_length - atoi(args[1]);
   }
+
+  printf("last_appended %d history_length %d\n", last_appended, history_length);
+  fflush(stdout);
 
   if (args[1] && strcmp(args[1], "-r") == 0) {
 
@@ -28,6 +34,27 @@ void custom_history(char *args[], char *input) {
       }
     } else {
       printf("history: missing file\n");
+    }
+    return;
+  } else if (args[1] && strcmp(args[1], "-a") == 0) {
+    if (args[2]) {
+
+      FILE *fp = fopen(args[2], "a");
+      if (!fp) {
+        perror("fopen");
+        return;
+      }
+
+      for (int i = last_appended; i < history_length; i++) {
+        HIST_ENTRY *entry = history_get(history_base + i);
+        if (entry && entry->line) {
+          fprintf(fp, "%s\n", entry->line);
+        }
+      }
+
+      fclose(fp);
+
+      last_appended = history_length;
     }
     return;
   }
