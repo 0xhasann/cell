@@ -15,6 +15,10 @@ int main(int argc, char *argv[]) {
   rl_bind_key('\t', rl_complete);
   rl_attempted_completion_function = my_completion;
   using_history();
+  char *histfile = getenv("HISTFILE");
+  if (histfile) {
+    read_history(histfile);
+  }
 
   while (1) {
 
