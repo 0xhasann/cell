@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 
   rl_bind_key('\t', rl_complete);
   rl_attempted_completion_function = my_completion;
-  // using_history();
+  using_history();
 
   while (1) {
 
@@ -91,6 +91,8 @@ int main(int argc, char *argv[]) {
       printf("%s\n", pwd());
     } else if (strcmp(args[0], "cd") == 0) {
       custom_cd(args);
+    } else if (strcmp(args[0], "history") == 0) {
+      custom_history(args);
     } else {
       custom_executable(args);
     }
