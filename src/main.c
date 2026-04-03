@@ -7,8 +7,11 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#define MAX_VALUE 1024
+char logical_pwd[MAX_VALUE];
 
 int main(int argc, char *argv[]) {
+  getcwd(logical_pwd, MAX_VALUE);
 
   handle_sigint();
 
@@ -75,9 +78,9 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(args[0], "type") == 0) {
       type_command(args + 1);
     } else if (strcmp(args[0], "pwd") == 0) {
-      printf("%s\n", pwd());
+      printf("%s\n", pwd(logical_pwd));
     } else if (strcmp(args[0], "cd") == 0) {
-      custom_cd(args);
+      custom_cd(args, logical_pwd);
     } else if (strcmp(args[0], "history") == 0) {
       custom_history(args, input);
     } else {

@@ -17,7 +17,10 @@
 
 static char command_buf[MAX_VALUE];
 
-char *pwd() { return getcwd(command_buf, MAX_VALUE); }
+char *pwd(char logical_pwd[]) {
+  // printf("%s\n", logical_pwd);
+  return logical_pwd;
+}
 
 void format_input(char *args[], char cmd[]) {
   char *ptr = cmd;
@@ -179,13 +182,58 @@ void custom_echo(char *args[]) {
   printf("\n");
 }
 
-void custom_cd(char *args[]) {
-  if (args[1] == NULL || strcmp(args[1], "~") == 0) {
-    char *home = getenv("HOME");
-    chdir(home);
-  } else if (chdir(args[1]) == -1) {
-    printf("%s: No such file or directory\n", args[1]);
+void clean_path(char *path) {
+  char temp[MAX_VALUE];
+  char *parts[MAX_VALUE];
+  int count = 0;
+
+  strncpy(temp, path, MAX_VALUE);
+  char *token = strtok(temp, "/");
+
+  while (token != NULL) {
+    if (strcmp(token, ".") == 0) {
+    } else if (strcmp(token, "..") == 0) {
+      if (count > 0)
+        count--;
+    } else {
+      parts[count++] = token;
+    }
+    token = strtok(NULL, "/");
   }
+
+  path[0] = '\0';
+  for (int i = 0; i < count; i++) {
+    strcat(path, "/");
+    strcat(path, parts[i]);
+  }
+
+  if (path[0] == '\0') {
+    strcat(path, "/");
+  }
+}
+
+void custom_cd(char *args[], char logical_pwd[]) {
+
+  char *target;
+
+  if (args[1] == NULL || strcmp(args[1], "~") == 0) {
+    target = getenv("HOME");
+  } else {
+    target = args[1];
+  }
+
+  if (chdir(target) == -1) {
+    printf("%s: No such file or directory\n", target);
+    return;
+  }
+
+  if (target[0] == '/') {
+    strncpy(logical_pwd, target, MAX_VALUE);
+  } else {
+    strcat(logical_pwd, "/");
+    strcat(logical_pwd, target);
+  }
+  clean_path(logical_pwd);
 }
 
 void custom_executable(char *args[]) {
